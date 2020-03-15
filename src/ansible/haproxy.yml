@@ -1,0 +1,35 @@
+---
+- name: Install HAProxy, configure and run
+  hosts: all
+  vars:
+    nginx_on_docker_ips: "{{ groups['tag_software_nginx_on_docker'] | map('extract', hostvars, ['ansible_host']) | join(',') }}"
+  become: true
+  tasks:
+
+    - name: Install HAProxy using apt
+      apt: name=haproxy state=latest update_cache=yes force_apt_get=yes
+
+    - name: Ansible Insert multiple lines using blockinfile
+      blockinfile:
+        dest: /etc/haproxy/haproxy.cfg
+        block: |
+
+          frontend firstbalance
+                  bind *:80
+                  option forwardfor
+                  default_backend webservers
+
+          backend webservers
+                  balance roundrobin
+                  server webserver1 {{ nginx_on_docker_ips.split(',')[0] }}:80
+                  server webserver2 {{ nginx_on_docker_ips.split(',')[1] }}:80
+                  server webserver1 {{ nginx_on_docker_ips.split(',')[0] }}:80 check
+                  server webserver2 {{ nginx_on_docker_ips.split(',')[1] }}:80 check
+                  option httpchk
+
+        backup: yes
+
+    - name: Restart service haproxy
+      service:
+        name: haproxy
+        state: restarted

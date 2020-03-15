@@ -1,0 +1,62 @@
+---
+- name: Install docker and run nginx
+  hosts: all
+  become: true
+  tasks:
+    - name: Create directory
+      file:
+       path: /home/vagrant/html/
+       state: directory
+
+    - name: Ansible create file with content example
+      copy: dest=/home/vagrant/html/index.html content="hello 1"
+      when: ansible_facts['nodename'] == 'forDevOps01Node1'
+
+    - name: Ansible create file with content
+      copy: dest=/home/vagrant/html/index.html content="hello 2"
+      when: ansible_facts['nodename'] == 'forDevOps01Node2'
+
+    - name: Install aptitude using apt
+      apt: name=python-pip state=latest update_cache=yes force_apt_get=yes
+
+    - name: Install aptitude using apt
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+    - name: Install required system packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt: update_cache=yes name=docker-ce state=latest
+
+    - name: Install pip
+      easy_install:
+        name: pip
+        state: latest
+
+    - name: Install setuptools
+      pip:
+        name: setuptools
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+    - name: ble
+      docker_container:
+        name: hello
+        image: nginx
+        detach: true
+        ports:
+          - "80:80"
+        volumes:
+          - /home/vagrant/html/:/usr/share/nginx/html/
