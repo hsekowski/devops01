@@ -22,7 +22,7 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "rg" {
   name      = var.default_name
-  location  = "West Europe"
+  location  = "North Europe"
 }
 
 resource "azurerm_public_ip" "publicip" {
